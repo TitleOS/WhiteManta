@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>White Manta - Rayhunter Monitor</title>
+    <style>
+        /* Basic Reset & Global Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            background-color: #f4f7f6; /* Light gray background */
+            color: #333;
+            line-height: 1.6;
+            padding-top: 60px; /* Space for the fixed banner */
+        }
+
+        /* Banner Styling */
+        .status-banner {
+            position: fixed; /* Fixed at the top */
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 12px 20px;
+            text-align: center;
+            font-weight: bold;
+            color: white;
+            z-index: 1000;
+            transition: background-color 0.3s ease-in-out;
+            font-size: 1.1em;
+        }
+
+        .banner-green {
+            background-color: #28a745; /* Green */
+        }
+
+        .banner-red {
+            background-color: #dc3545; /* Red */
+        }
+
+        /* Main Content Container */
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px; /* Space between squares */
+            padding: 25px;
+            max-width: 1200px;
+            margin: 0 auto; /* Center the container */
+        }
+
+        /* Square Styling (Modern UX) */
+        .square {
+            background-color: #ffffff; /* White background for squares */
+            border-radius: 12px; /* Rounded corners */
+            padding: 20px 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* Subtle shadow */
+            flex: 1 1 300px; /* Flex properties for responsiveness */
+            min-width: 280px; /* Minimum width before wrapping */
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+
+        .square:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .square h2 {
+            color: #007bff; /* Accent color for titles */
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 10px;
+        }
+
+        .square h3 {
+            color: #555;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .square p, .square li {
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 0.95em;
+        }
+
+        .square strong {
+            color: #333;
+            min-width: 120px; /* Align values a bit */
+            display: inline-block;
+        }
+
+        .square ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .square dl {
+            margin-left: 10px;
+        }
+        .square dt {
+            font-weight: bold;
+            color: #333;
+            margin-top: 5px;
+        }
+        .square dd {
+            margin-left: 15px;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        /* Button for testing banner change */
+        .banner-toggle-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        .banner-toggle-button:hover {
+            background-color: #0056b3;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="statusBanner" class="status-banner banner-green">
+        Loading...
+    </div>
+
+    <div class="container">
+        <div class="square">
+            <h2>System Stats</h2>
+            <p><strong>Disk Available: </strong> <span id="disk-available">{{disk_available}}</span></p>
+            <p><strong>Mountpoint: </strong> <span id="disk-mountpoint">{{disk_mountpoint}}</span></p>
+            <p><strong>Partition: </strong> <span id="disk-partition">{{disk_partition}}</span></p>
+            <p><strong>Total Size: </strong> <span id="disk-total">{{disk_total}}</span></p>
+            <p><strong>Used %: </strong> <span id="disk-used-percentage">{{disk_used_percentage}}</span></p>
+            <p><strong>Used Space: </strong> <span id="disk-used-space">{{disk_used_space}}</span></p>
+            <hr style="margin: 15px 0; border-color: #e9ecef;">
+            <p><strong>Total RAM: </strong> <span id="ram-total">{{ram_total}}</span></p>
+            <p><strong>Used RAM: </strong> <span id="ram-used">{{ram_used}}</span></p>
+            <p><strong>Free RAM: </strong> <span id="ram-free">{{ram_free}}</span></p>
+        </div>
+
+        <div class="square">
+            <h2>Rayhunter Analysis Status</h2>
+            <dl>
+                <dt>Name: </dt> <span id="analyzer_one_name">{{analyzer_one_name}}</span>
+                <dt>Description: </dd><span id="analyzer_one_desc">{{analyzer_one_desc}}</span>
+
+                <dt>Name: </dt><span id="analyzer_two_name">{{analyzer_two_name}}</span>
+                <dt>Description: </dd><span id="analyzer_two_desc">{{analyzer_two_desc}}</span>
+
+                <dt>Name: </dt><span id="analyzer_three_name">{{analyzer_three_name}}</span>
+                <dt>Description: </dd><span id="analyzer_three_name">{{analyzer_three_desc}}</span>
+            </dl>
+            <p><strong>System Architecture: </strong> <span id="sys-arch">{{sys_arch}}</span></p>
+            <p><strong>Rayhunter Version: </strong> <span id="ray-version">{{ray_version}}</span></p>
+            <p><strong>OS Version: </strong> <span id="os-version">{{os_version}}</span></p>
+        </div>
+    </div>
+
+    <script>
+        const banner = document.getElementById('statusBanner');
+        let isGreen = true; // Initial state
+
+        function toggleBanner() {
+            if (isGreen) {
+                banner.classList.remove('banner-green');
+                banner.classList.add('banner-red');
+                banner.textContent = 'An active Stingray has been detected!';
+            } else {
+                banner.classList.remove('banner-red');
+                banner.classList.add('banner-green');
+                banner.textContent = 'The airwaves are clear :)';
+            }
+            isGreen = !isGreen; // Toggle the state
+        }
+    </script>
+
+</body>
+</html>
