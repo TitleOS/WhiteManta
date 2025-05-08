@@ -1,7 +1,7 @@
 # White Manta - A web monitoring page for EFF's RayHunter
 
 ## What is WhiteManta?
-WhiteManta is a Python Flask script packaged into a Dockerimage that is designed to relay information from a rooted hotspot device such as the Orbic RC400L, running EFF's [Rayhunter](github.com/EFForg/rayhunter) stingray detection software. Normally you can only access Rayhunter's reports by either connecting to the hotspot's local WiFI network or via ADB port forwarding over USB. This container aims to remove that restriction by allowing you to connect your hotspot via USB to one device running the container, which will then host a web page accessible by any device on your network. 
+WhiteManta is a Python Flask script packaged into a Dockerimage that is designed to relay information from a rooted hotspot device such as the Orbic RC400L, running EFF's [Rayhunter](http://github.com/EFForg/rayhunter) stingray detection software. Normally you can only access Rayhunter's reports by either connecting to the hotspot's local WiFI network or via ADB port forwarding over USB. This container aims to remove that restriction by allowing you to connect your hotspot via USB to one device running the container, which will then host a web page accessible by any device on your network. 
 
 In addtion, White Manta can be configured to hit a WebHook of your choice any time a stingray interception device is active, allowing you to get anything from a Push Notification, to SMS text or email. 
 
@@ -16,7 +16,10 @@ In addtion, White Manta can be configured to hit a WebHook of your choice any ti
 
 ## Installation (WIP)
 Build Docker image.
+
 Map container port 8888 to desired port on host machine to view WhiteManta's Web UI.
+
 Set enviroment variable "webhook_url" to webhook target.
+
 Deploy container.
 
