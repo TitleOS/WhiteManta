@@ -6,7 +6,7 @@ WhiteManta is a Python Flask script packaged into a Dockerimage that is designed
 In addtion, White Manta can be configured to hit a WebHook of your choice any time a stingray interception device is active, allowing you to get anything from a Push Notification, to SMS text or email. 
 
 ## Features
-* Easy installation, simply connect your Orbic installed with Rayhunter to the PC that will be running the White Manta container over USB-C, before running `adb forward 14480:tcp 80:tcp` which will allow the White Manta container to query the web page running on the Orbic via TCP port 14480.
+* Easy installation, simply connect your Orbic installed with Rayhunter to the PC that will be running the White Manta container over USB-C, before running `adb forward 14480:tcp 8080:tcp` which will allow the White Manta container to query the web page running on the Orbic via TCP port 14480.
 
 * Webhook Trigger when Stingray is detected allowing for various means of notification.
 
