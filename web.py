@@ -3,8 +3,56 @@ import requests
 import socket
 import os
 import datetime
+import netifaces
+import ipaddress
 
-ipaddr = str(socket.gethostbyname(socket.gethostname()))
+def get_lan_ip_netifaces():
+    """
+    Finds a non-loopback, private IPv4 address (like 192.168.x.x)
+    on any of the machine's network interfaces.
+    Prioritizes IPs starting with '192.' if found.
+    """
+    lan_ips = []
+    preferred_ip = None
+
+    try:
+        for interface in netifaces.interfaces():
+            # Skip loopback interfaces
+            if interface == 'lo' or interface.startswith('lo'):
+                continue
+
+            ifaddrs = netifaces.ifaddresses(interface)
+
+            # Check for IPv4 addresses
+            if netifaces.AF_INET in ifaddrs:
+                for addr_info in ifaddrs[netifaces.AF_INET]:
+                    ip_str = addr_info.get('addr')
+                    if ip_str:
+                        try:
+                            ip_obj = ipaddress.ip_address(ip_str)
+                            # Ensure it's not loopback and is a private address
+                            if not ip_obj.is_loopback and ip_obj.is_private:
+                                if ip_str.startswith("192."):
+                                    # If we find a 192.x address, consider it preferred
+                                    preferred_ip = ip_str
+                                    # You could return immediately if a 192. is all you need
+                                    # return preferred_ip
+                                lan_ips.append(ip_str)
+                        except ValueError:
+                            # Not a valid IP address string
+                            continue
+    except Exception as e:
+        print(f"Error getting IP addresses with netifaces: {e}")
+        return None # Or handle error as appropriate
+
+    if preferred_ip:
+        return preferred_ip
+    elif lan_ips:
+        return lan_ips[0] # Return the first private IP found if no '192.'
+    else:
+        return None
+
+ipaddr = get_lan_ip_netifaces()
 
 class system_stats:
     disk_available_size = "not filled"
