@@ -173,25 +173,50 @@
         </div>
     </div>
     <script>
+         const banner = document.getElementById('statusBanner');
 
-        let isGreen = true
-        fetch('/warnings').then(response => response.json()).then(data => passed_banner);
-        isGreen = passed_banner["banner_isgrn"]
-        const banner = document.getElementById('statusBanner');
-        
-        function toggleBanner() {
-            if (isGreen) {
-                banner.classList.remove('banner-green');
-                banner.classList.add('banner-red');
-                banner.textContent = passed_banner["banner_message"] + " @" + passed_banner["banner_timestamp"];
-            } else {
+        function updateBanner(data) {
+            // data.banner_isgrn is a boolean (true/false) from the JSON response
+            if (data.banner_isgrn) {
                 banner.classList.remove('banner-red');
                 banner.classList.add('banner-green');
-                banner.textContent = 'The airwaves are clear :)';
+                banner.textContent = data.banner_message; 
+            } else {
+                banner.classList.remove('banner-green');
+                banner.classList.add('banner-red');
+                // Concatenate message and timestamp for warnings
+                banner.textContent = data.banner_message + " " + data.banner_timestamp; 
             }
-            isGreen = !isGreen; // Toggle the state
         }
-        toggleBanner()
+
+        function fetchAndUpdateBanner() {
+            fetch('/warnings')
+                .then(response => {
+                    if (!response.ok) {
+                        // If HTTP response is not OK, throw an error to be caught by .catch()
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json(); // Parse JSON from the response
+                })
+                .then(data => {
+                    // Data successfully fetched and parsed
+                    updateBanner(data);
+                })
+                .catch(error => {
+                    // Handle any errors that occurred during fetch or JSON parsing
+                    console.error('Error fetching or processing warnings:', error);
+                    banner.classList.remove('banner-green');
+                    banner.classList.add('banner-red');
+                    banner.textContent = 'Error loading status. Check console for details.';
+                });
+        }
+
+        // Fetch and update the banner when the page loads
+        fetchAndUpdateBanner();
+
+        // Optional: Periodically refresh the banner status (e.g., every 30 seconds)
+        console.log("Refreshing banner status after 30 seconds...")
+        setInterval(fetchAndUpdateBanner, 30000);
     </script>
 
 </body>

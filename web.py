@@ -1,58 +1,9 @@
 from flask import Flask, render_template
 import requests
-import socket
 import os
 import datetime
-import netifaces
-import ipaddress
 
-def get_lan_ip_netifaces():
-    """
-    Finds a non-loopback, private IPv4 address (like 192.168.x.x)
-    on any of the machine's network interfaces.
-    Prioritizes IPs starting with '192.' if found.
-    """
-    lan_ips = []
-    preferred_ip = None
-
-    try:
-        for interface in netifaces.interfaces():
-            # Skip loopback interfaces
-            if interface == 'lo' or interface.startswith('lo'):
-                continue
-
-            ifaddrs = netifaces.ifaddresses(interface)
-
-            # Check for IPv4 addresses
-            if netifaces.AF_INET in ifaddrs:
-                for addr_info in ifaddrs[netifaces.AF_INET]:
-                    ip_str = addr_info.get('addr')
-                    if ip_str:
-                        try:
-                            ip_obj = ipaddress.ip_address(ip_str)
-                            # Ensure it's not loopback and is a private address
-                            if not ip_obj.is_loopback and ip_obj.is_private:
-                                if ip_str.startswith("192."):
-                                    # If we find a 192.x address, consider it preferred
-                                    preferred_ip = ip_str
-                                    # You could return immediately if a 192. is all you need
-                                    # return preferred_ip
-                                lan_ips.append(ip_str)
-                        except ValueError:
-                            # Not a valid IP address string
-                            continue
-    except Exception as e:
-        print(f"Error getting IP addresses with netifaces: {e}")
-        return None # Or handle error as appropriate
-
-    if preferred_ip:
-        return preferred_ip
-    elif lan_ips:
-        return lan_ips[0] # Return the first private IP found if no '192.'
-    else:
-        return None
-
-ipaddr = get_lan_ip_netifaces()
+ipaddr = os.getenv("ip_address")
 
 class system_stats:
     disk_available_size = "not filled"
@@ -67,7 +18,7 @@ class system_stats:
     memory_used = "not filled"
     
     def __init__(self):
-        system_stats_json = requests.get(f"http://{ipaddr}:14488/api/system-stats").json
+        system_stats_json = requests.get(f"http://{ipaddr}:14480/api/system-stats").json()
         
         self.disk_available_size = system_stats_json["disk_stats"]["available_size"]
         self.mountpoint = system_stats_json["disk_stats"]["mounted_on"]
@@ -93,19 +44,19 @@ class analysis_report:
     system_os_version = "not filled"
     
     def __init__(self):
-        response = requests.get(f"http://{ipaddr}:14488/api/analysis/live")
-        analysis_report_json = response.json
+        response = requests.get(f"http://{ipaddr}:14480/api/analysis/live")
+        analysis_report_json = response.json()
         
         if(response.status_code == 503):
             print("No QMDL data is being recorded, starting a new live recording.")
             start_rayhunter_recording()
         
         self.analyzer_one_name = analysis_report_json["analyzers"][0]["name"]
-        self.analyzer_one_name = analysis_report_json["analyzers"][0]["description"]
+        self.analyzer_one_desc = analysis_report_json["analyzers"][0]["description"]
         self.analyzer_two_name = analysis_report_json["analyzers"][1]["name"]
-        self.analyzer_two_name = analysis_report_json["analyzers"][1]["description"]
+        self.analyzer_two_desc = analysis_report_json["analyzers"][1]["description"]
         self.analyzer_three_name = analysis_report_json["analyzers"][2]["name"]
-        self.analyzer_three_name = analysis_report_json["analyzers"][2]["description"]
+        self.analyzer_three_desc = analysis_report_json["analyzers"][2]["description"]
         
         self.system_arch = analysis_report_json["rayhunter"]["arch"]
         self.rayhunter_version = analysis_report_json["rayhunter"]["rayhunter_version"]
@@ -116,7 +67,7 @@ class warnings:
     warning_one_event = "placeholder"
     
     def __init__(self):
-        warnings_json = requests.get(f"http://{ipaddr}:14480/api/analysis-report/live").json
+        warnings_json = requests.get(f"http://{ipaddr}:14480/api/analysis-report/live", timeout=5).json()
         
         if warnings_json != None:
             self.warning_one_timestamp = warnings_json["warnings"][0]["warning"]["timestamp"]
@@ -126,24 +77,25 @@ class warnings:
         
 
 def stop_rayhunter_recording():
-    requests.post(f"http://{ipaddr}:14488/api/stop-recording")
+    requests.post(f"http://{ipaddr}:14480/api/stop-recording")
     
 def start_rayhunter_recording():
-    requests.post(f"http://{ipaddr}:14488/api/start-recording")
+    requests.post(f"http://{ipaddr}:14480/api/start-recording")
     
 def send_webhook():
     current_warning = warnings()
-    data = {'Stingray Detected', f"Warning: {current_warning.warning_one_event} @ {current_warning.warning_one_timestamp}"}
-    webhook_url = os.getenv("webhook_url")
+    if current_warning.warning_one_event != "placeholder":
+        data = {'Stingray Detected', f"Warning: {current_warning.warning_one_event} @ {current_warning.warning_one_timestamp}"}
+        webhook_url = os.getenv("webhook_url")
     
-    if webhook_url != None:
-        response = requests.post(webhook_url, data=data)
-        if response.ok:
-            print(f"Webhook was fired ({webhook_url} at {datetime.datetime.utcnow()}")
+        if webhook_url != None:
+            response = requests.post(webhook_url, data=data)
+            if response.ok:
+                print(f"Webhook was fired ({webhook_url} at {datetime.datetime.utcnow()}")
+            else:
+                print(f"Attempted to fire webhook however server returned a non-OK status code (Code: {str(response.status_code)}")
         else:
-            print(f"Attempted to fire webhook however server returned a non-OK status code (Code: {str(response.status_code)}")
-    else:
-        print("Webhook URL not defined, so no POST sent.")
+            print("Webhook URL not defined, so no POST sent.")
 
 
 app = Flask(__name__)
@@ -161,8 +113,7 @@ def warnings_page():
     
     banner_struct = {'banner_message': 'The airwaves are clear :)', 'banner_timestamp': datetime.datetime.utcnow(), 'banner_isgrn': 'True'}
     
-    banner_grn = True
-    if warnings != None:
+    if current_warnings.warning_one_event != "placeholder":
         banner_struct["banner_message"] = f"WARNING: {current_warnings.warning_one_event} "
         banner_struct["banner_timestamp"] = f"@ {current_warnings.warning_one_timestamp}"
         banner_struct["banner_isgrn"] = False
@@ -179,8 +130,9 @@ def main():
     stop_rayhunter_recording() #Stop recording if it is already going, then restart it to ensure fresh information is populated
     start_rayhunter_recording()
     
+    print("Starting Flask web server on port 8888...")
     app.run(host="0.0.0.0", port=8888, debug=False) #Map container port 8888 to target on host, run Flask without debug.
-    print("White Manta Flask application has started on port 8888.")
+    print("White Manta has shut down.")
     
 if __name__ == '__main__':
     main()
