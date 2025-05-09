@@ -172,16 +172,18 @@
             <p><strong>OS Version: </strong> <span id="os-version">{{os_version}}</span></p>
         </div>
     </div>
-
     <script>
-        const banner = document.getElementById('statusBanner');
-        let isGreen = true; // Initial state
 
+        let isGreen = true
+        fetch('/warnings').then(response => response.json()).then(data => passed_banner);
+        isGreen = passed_banner["banner_isgrn"]
+        const banner = document.getElementById('statusBanner');
+        
         function toggleBanner() {
             if (isGreen) {
                 banner.classList.remove('banner-green');
                 banner.classList.add('banner-red');
-                banner.textContent = 'An active Stingray has been detected!';
+                banner.textContent = passed_banner["banner_message"] + " @" + passed_banner["banner_timestamp"];
             } else {
                 banner.classList.remove('banner-red');
                 banner.classList.add('banner-green');
@@ -189,6 +191,7 @@
             }
             isGreen = !isGreen; // Toggle the state
         }
+        toggleBanner()
     </script>
 
 </body>

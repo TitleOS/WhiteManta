@@ -2,6 +2,7 @@ from flask import Flask, render_template
 import requests
 import socket
 import os
+import datetime
 
 ipaddr = socket.gethostbyname(socket.gethostbyname())
 
@@ -57,6 +58,20 @@ class analysis_report:
         self.rayhunter_version [analysis_report_json]["rayhunter"]["rayhunter_version"]
         self.system_os_version [analysis_report_json]["rayhunter"]["system_os"]
 
+class warnings:
+    warning_one_timestamp = "placeholder"
+    warning_one_event = "placeholder"
+    
+    def __init__(self):
+        warnings_json = requests.get(f"http://{ipaddr}:14480/api/analysis-report/live").json
+        
+        if warnings_json != None:
+            self.warning_one_timestamp = warnings_json["warnings"][0]["warning"]["timestamp"]
+            self.warning_one_event = warnings_json["warnings"][0]["event"]["message"]
+            return self
+        return None
+        
+
 def stop_rayhunter_recording():
     requests.post(f"http://{ipaddr}:14488/api/stop-recording")
     
@@ -81,6 +96,19 @@ def main_page():
     report = analysis_report()
     
     return render_template("index.html", disk_available=stats.disk_available_size, disk_mountpoint=stats.mountpoint, disk_partition=stats.partition, disk_total=stats.total_size, disk_used_percentage=stats.disk_used_percent, disk_used_space=stats.disk_used_size, ram_total=stats.memory_total, ram_free=stats.memory_free, ram_used=stats.memory_used, analyzer_one_name=report.analyzer_one_name, analyzer_one_desc=report.analyzer_one_desc, analyzer_two_name=report.analyzer_two_name, analyzer_two_desc=report.analyzer_two_desc, analyzer_three_name=report.analyzer_three_name, analyzer_three_desc=report.analyzer_three_desc, sys_arch=report.system_arch, ray_version=report.rayhunter_version, os_version=report.system_os_version)
+
+@app.route("/warnings")
+def warnings_page():
+    current_warnings = warnings()
+    
+    banner_struct = {'banner_message': 'The airwaves are clear :)', 'banner_timestamp': datetime.datetime.utcnow(), 'banner_isgrn': 'True'}
+    
+    banner_grn = True
+    if warnings != None:
+        banner_struct["banner_message"] = f"WARNING: {current_warnings.warning_one_event} "
+        banner_struct["banner_timestamp"] = f"@ {current_warnings.warning_one_timestamp}"
+        banner_struct["banner_isgrn"] = False
+    return banner_struct
 
 print(f"Local IP Address: {ipaddr}")
 start_rayhunter_recording() #Start recording so the live analysis API is populated
