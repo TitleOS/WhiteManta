@@ -134,3 +134,6 @@ def main():
     app.run(host="0.0.0.0", port=8888, debug=False) #Map container port 8888 to target on host, run Flask without debug.
     print("White Manta Flask application has started on port 8888.")
     
+if __name__ == '__main__':
+    main()
+    
